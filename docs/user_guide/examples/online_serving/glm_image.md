@@ -154,7 +154,7 @@ cat response.json | jq -r '.choices[0].message.content[0].image_url.url' | cut -
 
 GLM-Image uses a 2-stage pipeline:
 
-```
+```text
 Stage 0 (AR Model)                Stage 1 (Diffusion)
 ┌───────────────────┐            ┌─────────────────────┐
 │ vLLM-optimized    │  prior     │  GlmImagePipeline   │
