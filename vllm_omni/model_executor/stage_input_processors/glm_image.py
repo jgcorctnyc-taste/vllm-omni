@@ -206,6 +206,11 @@ def _parse_generated_tokens(
         )
         raise ValueError(f"token parse failed: actual_tokens={actual_tokens}, mode={'i2i' if is_i2i else 't2i'}")
 
+    # TEMP(E2E): DiT prior_token_embedding has 16384 rows (0..16383). AR vision
+    # vocab includes special tokens >= 16384; clamp until online serving sets a
+    # resolution-aware max_tokens budget (see fix/glm-image-dynamic-max-tokens).
+    prior_token_ids_d32 = torch.clamp(prior_token_ids_d32, 0, 16383)
+
     # Upsample from 32x to 16x
     prior_token_ids = _upsample_token_ids(prior_token_ids_d32, actual_h, actual_w)
 
