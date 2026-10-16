@@ -172,16 +172,20 @@ Stage 0 (AR Model)                Stage 1 (Diffusion)
 ## VAE Patch Parallelism (decode)
 
 GLM-Image supports decode-only VAE patch parallelism on the diffusion stage when
-stage 1 spans multiple GPUs. Pair it with tensor parallelism on the same two
-GPUs:
+stage 1 spans multiple GPUs. The shipped deploy config
+`vllm_omni/deploy/glm_image_tp2_vae_pp2.yaml` places stage 0 on GPU 0 and runs
+stage 1 on GPUs 0,1 with tensor parallelism 2 and `vae_patch_parallel_size: 2`:
 
 ```bash
 vllm serve zai-org/GLM-Image --omni --port 8091 \
-  --stage-overrides '{"0": {"devices": "0"}, "1": {"devices": "0,1", "tensor_parallel_size": 2, "parallel_config": {"tensor_parallel_size": 2, "vae_patch_parallel_size": 2}}}' \
-  --vae-use-tiling
+  --deploy-config vllm_omni/deploy/glm_image_tp2_vae_pp2.yaml
 ```
 
-This path distributes VAE decode tiles across the diffusion-stage world group.
+VAE tiling is enabled automatically when `vae_patch_parallel_size > 1`. At the
+default 1024x1024 output the latent fits in one VAE tile, so decode is split into
+halo patches (near-identical to single-GPU decode); larger outputs are split into
+overlapping tiles. The diffusion-stage log reports which strategy ran:
+`Decode run with distributed executor, split strategy is patch` (or `tile`).
 Image-edit `vae.encode` remains sequential in the current release.
 
 ## VRAM Requirements
